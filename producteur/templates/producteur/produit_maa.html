@@ -1,0 +1,148 @@
+{% load static %}
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="fr" lang="fr" dir="ltr">
+  <head>
+    <title>Exemple</title>
+    <style type = "text/css">
+        <!--
+            @page {
+                size: A4 landscape;
+                
+            }
+            @page rotated {
+                size: landscape;
+                background-color: gray;
+            }
+            body {
+            -webkit-print-color-adjust: exact !important; font-size: 10pt;
+            font-family:'Arial';
+            }
+            #page {@page:rotated; margin:0%; padding-left: 3mm; padding-right: 3mm;}
+            hr.saut { page-break-before : right; }
+            table {border-collapse: collapse; width:100%}
+
+            table.header tr, table.header td {border:0px;}
+            
+            div.logos { text-align: right; margin:2mm 2mm; width: 50mm;}
+            div.logos img { height: 10mm }
+
+            .header h1 {font-size: 300%;}
+            .header .info {width:100%;font-size:120%; color:rgb(102, 0, 0)}
+            .header .contact {display:inline-block; width: 49%}
+            .header .origine {display:inline-block; width: 49%; color:rgb(0, 115, 209)}
+
+            tr.entete_up { background-color:lightgray; color: rgb(0, 115, 209); text-align: left;}
+            .atmo { text-align: center; font-size: 80%;}
+            .atmo td { max-width: 50mm; min-width: 2mm; border:  1px solid black; }
+            .atmo tr {border-bottom:  1px solid black; height:7mm}
+            td.risque_vert{ background-color: green;}
+
+            /*.label-90 { writing-mode: vertical-lr; text-orientation: upright; color:rgb(0, 115, 209);font-size:80%;}*/
+            td.label-90 { transform: rotate(-90deg); color:rgb(0, 115, 209); max-width: 5mm; font-size:80%;
+                        border:  1px solid black;}
+            td.etiquette {border:  1px solid black; }
+            tr.echeances { color:rgb(0, 115, 209);}
+
+            .wind_sea {color:#bb7b05;}
+            .wind_picto { width:8pt;}
+            .cadre_histo { display:inline-block; width:100%; height: 10mm; vertical-align: top; 
+                            margin:0; padding:0;}
+            .cadre_histo div { display:inline-block; width:100%; vertical-align: top;
+                margin:0; padding:0; font-size:80%}
+            
+            .cadre_histo .pan { background-color: darkcyan;}
+            div.footer { font-size: 80%;}
+            div.footer > div {display:inline-block; padding-right: 3mm;}
+            div.footer_title {width:40mm; vertical-align: top; font-weight: bold;text-align: right;}
+            div.footer_note {width:220mm;}
+            div.footer_page {width:20mm; vertical-align: top; text-align: right; float:right}
+        -->       
+        
+    </style>
+  </head>
+
+  <body>
+      <div id="page">
+            <table class="header"><tr>
+                <td><h1>Océanogramme</h1></td>
+                <td><div class="info">{{localisation}}<br>{{validity}}</div>
+                    <div class="origine">{{origine}}<br>{{production}}</div>
+                    <div class="contact"><b>Contact :</b> prevmeteomer@meteo.fr<br><b>Phone :</b> +33 298325567</div>
+                </td>
+                <td><div class="logos">
+                    <img  src="{% static 'oceano/log_vanoord.jpg' %}"  />    
+                    <img  src="{% static 'oceano/logo-meteo-france.png' %}"  alf="Météo-France" />   
+                </div></td>
+            </tr></table>
+            <table class="atmo">
+                <thead>
+                    <tr class="entete_up"><td colspan="14">Forecast summary up to D+3</td><td colspan="17">Warning up to 24h</td></tr>
+                </thead>
+                <tbody>
+                    <tr ><td colspan="14">{{ summary }}</td>
+                        <td colspan="6" class="risque_vert etiquette">Risk of Gale up to 24h</td>
+                        <td colspan="7" class="etiquette">Other Risks Confidence Index</td>
+                        <td colspan="5" class="etiquette">Nothing to report</td>
+                    </tr>
+                    <tr class="echeances"><td rowspan="2" colspan="3" class="etiquette">UTC hour</td><td colspan="15">Sun 24</td><td colspan="13">Mon 25</td></tr>
+                    <tr class="echeances">
+                        {% for echeance in echeances %}
+                        <td>{{ echeance }}</td>
+                        {% endfor %}
+                    </tr>
+                    <tr><td rowspan="14" class="label-90">WAVES</td>
+                            <td rowspan="5" class="label-90">Total Sea</td>
+                                <td class="etiquette">HSTot (m)</td>{% for value in fake_values %}<td>{{ value }}</td>{% endfor %}
+                                <tr><td class="etiquette">Hmax (m)</td>{% for value in fake_values %}<td>{{ value }}</td>{% endfor %}</tr>
+                                <tr><td class="etiquette">Mean P. (s)</td>{% for value in fake_values %}<td>{{ value }}</td>{% endfor %}</tr>
+                                <tr><td class="etiquette">Peak P. (s)</td>{% for value in fake_values %}<td>{{ value }}</td>{% endfor %}</tr>
+                                <tr><td class="etiquette">Peak Dir (°)</td>{% for value in fake_values_vent %}<td><div><img  src="{% static 'oceano/picto_vent.png' %}" alt="{{value}}" class="wind_picto" style="transform:rotate({{value}}deg)"/><br>{{ value }}</div></td>{% endfor %}</tr>
+                            <tr class="wind_sea"><td rowspan="3" class="label-90">Wind Sea</td>
+                                <td class="etiquette">Dir (°)</td>{% for value in fake_values_vent %}<td><div><img  src="{% static 'oceano/picto_vent.png' %}" alt="{{value}}" class="wind_picto" style="transform:rotate({{value}}deg)"/><br>{{ value }}</div></td>{% endfor %}</tr>
+                                <tr class="wind_sea"><td class="etiquette">HS Sea (m)</td>{% for value in fake_values %}<td>{{ value }}</td>{% endfor %}</tr>
+                                <tr class="wind_sea"><td class="etiquette">Peak P. (s)</td>{% for value in fake_values %}<td>{{ value }}</td>{% endfor %}</tr>
+                            <tr><td rowspan="3" class="label-90"><div Primary Swell</td>
+                                <td class="etiquette">Dir (°)</td>{% for value in fake_values_vent %}<td><div><img  src="{% static 'oceano/picto_vent.png' %}" alt="{{value}}" class="wind_picto" style="transform:rotate({{value}}deg)"/><br>{{ value }}</div></td>{% endfor %}</tr>
+                                <tr><td class="etiquette">HS1 (m)</td>{% for value in fake_values %}<td>{{ value }}</td>{% endfor %}</tr>
+                                <tr><td class="etiquette">Peak P. (s)</td>{% for value in fake_values %}<td>{{ value }}</td>{% endfor %}</tr>
+                            <tr><td rowspan="3" class="label-90">Secondary Swell</td>
+                                <td class="etiquette">Dir (°)</td>{% for value in fake_values_vent %}<td><div><img  src="{% static 'oceano/picto_vent.png' %}" alt="{{value}}" class="wind_picto" style="transform:rotate({{value}}deg)"/><br>{{ value }}</div></td>{% endfor %}</tr>
+                                <tr><td class="etiquette">HS2 (m)</td>{% for value in fake_values %}<td>{{ value }}</td>{% endfor %}</tr>
+                                <tr><td class="etiquette">Peak P. (s)</td>{% for value in fake_values %}<td>{{ value }}</td>{% endfor %}</tr>
+                    <tr><td rowspan="2" class="label-90">Currents</td>
+                        <td  class="label-90">Speed (m/s)</td><td class="etiquette">Surface</td>{% for value in fake_values_histo %}<td>
+                            <div class="cadre_histo">
+                                <div class="pan" style="height:{{value.hauteur}}mm">&nbsp;</div>
+                                <div>{{ value.valeur }}</div>    
+                            </div>
+                        </td>{% endfor %}</tr>
+                        <tr><td class="label-90">Dir</td><td class="etiquette">Surface(°)</td>{% for value in fake_values_vent %}<td><div><img  src="{% static 'oceano/picto_vent.png' %}" alt="{{value}}" class="wind_picto" style="transform:rotate({{value}}deg)"/><br>{{ value }}</div></td>{% endfor %}</tr>
+                    <tr><td colspan="3" class="etiquette">Tide height (m)</td>
+                        {% for value in fake_values_histo %}<td>
+                            <div class="cadre_histo">
+                                <div class="pan" style="height:{{value.hauteur}}mm">&nbsp;</div>
+                                <div>{{ value.valeur }}</div>    
+                            </div>
+                        </td>{% endfor %}</tr>
+                </tbody>
+            </table>
+            <div class="footer"><div class="footer_title">Notes concerning the report</div>
+                <div class="footer_note"><b>Abbreviations used</b> (NS = No significant, NA = Not available )<br>
+                    <b>Hours :</b> are given in UTC (Universal Time Coordinated)<br>
+                    <b>Wind :</b> speed is knots and direction is real direction from where the wind blows - VRB is variable direction<br>
+                    <b>Waves :</b> heights are the significant heights of the waves, there are given with a 10 percent margin<br>
+                    HS total is significant wave height of the combinated sea and swell<br>
+                    Hmax is the possible highest single wave given by the formula Hs x 2(based on a Rayleigh distribution for the waves heights)
+                    </div> 
+                <div class="footer_page">Page 1/4</div>
+            </div>
+      </div>
+      <hr class="saut">
+      <div id="page">
+        <h1>Page2</h1>
+      </div>
+
+    
+  </body>
+</html>

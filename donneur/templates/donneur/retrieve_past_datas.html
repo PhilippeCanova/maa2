@@ -1,0 +1,14 @@
+<style>
+    td {padding: 0.5em; text-align: center; }
+</style>
+<form method="post">{% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Send message">
+</form>
+{% if station %}
+
+{% include "./data_tableau.html" with titre="Données Aéro" datas=data_aero %}
+{% include "./data_tableau.html" with titre="Données Horaires" datas=data_h %}
+{% include "./data_tableau.html" with titre="Données Quotidiennes" datas=data_q %}
+
+{% endif %}

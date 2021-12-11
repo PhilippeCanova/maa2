@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<get_historique_maa date="{{ heure_creation }}">
+    <stations>
+        {% for element in stations %}
+        <station station="{{ element.station.oaci }}">
+            <maas_historique profondeur="{{ profondeur }}">
+                {% for envoi in element.maas %}
+                <maa_historique station="{{ element.station.oaci }}" type="{{ envoi.configmaa.type_maa }}" seuil="{{ envoi.configmaa.seuil }}" date_envoi="{{ envoi.date_envoi|date:"Y-m-d H:i:s" }}" date_debut="{{ envoi.date_debut|date:"Y-m-d H:i:s" }}" date_fin="{{ envoi.date_fin|date:"Y-m-d H:i:s" }}" numero="{{ envoi.numero }}">
+                    <message>
+                    <entete><![CDATA[{{ envoi.entete_transmet }}]]></entete>
+                    <corps_message><![CDATA[{{ envoi.message}}]]></corps_message>
+                    </message>
+                </maa_historique>
+                {% endfor %}
+            </maas_historique>
+        </station>
+        {% endfor %}
+    </stations>
+</get_historique_maa>

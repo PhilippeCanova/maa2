@@ -1,0 +1,8 @@
+Django~=3.2.5
+djangorestframework 
+-e git://github.com/omab/python-social-auth.git@6b1e301c79#egg=python-social-auth
+#python-gettext-4.0
+reportlab
+pyppeteer
+#coreapi 
+#pyyaml

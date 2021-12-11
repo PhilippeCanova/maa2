@@ -1,0 +1,13 @@
+# python3 requirements.txt file
+# see https://pip.readthedocs.io/en/1.1/requirements.html
+django~=3.2
+djangorestframework
+django-cors-headers
+reportlab
+pyppeteer
+coverage
+django-debug-toolbar
+selenium
+PyPDF3
+django-extensions
+pygraphviz

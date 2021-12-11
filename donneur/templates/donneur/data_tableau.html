@@ -1,0 +1,13 @@
+<p>
+    <label><h2>{{ titre }}</h2></label>
+    <br>
+    <table>
+        {% for ligne in datas %}
+        <tr>
+            {% for case in ligne %}
+            <td>{{ case }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>    
+</p>

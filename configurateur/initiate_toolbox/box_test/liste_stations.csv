@@ -1,0 +1,12 @@
+oaci;nom;entete;date_pivot;region__tag;inseepp;outremer;active;ouverture;fermeture;retention;reconduction;repousse;wint_unit;fuseau;ouverture_hiver;fermeture_hiver;ouverture_ete;fermeture_ete;inseeaero
+AAAA;Alpha;WLFR86 AAAA;2021-03-30 01:00:00;CRA Nice;1111111;False;True;00:00;23:59;1;3;3;kt;Europe/Paris;00:00;23:59;00:00;23:59;1111111
+BBBB;Bravo;WLFR86 BBBB;2021-03-30 01:00:00;CRA Nice;2222222;False;True;04:00;21:00;1;3;3;kmh;Europe/Paris;04:00;21:00;03:00;20:00;2222222
+CCCC;Charly;WLFR86 CCCC;2021-03-30 01:00:00;CRA Roissy;3333333;True;True;00:00;23:59;1;3;3;kmh;America/Guyana;04:00;21:00;03:00;20:00;3333333
+DDDD;Delta;WLFR86 DDDD;2021-03-30 01:00:00;CRA Nice;4444444;False;True;04:00;21:00;1;3;3;kmh;Europe/Paris;04:00;21:00;03:00;20:00;4444444
+EEEE;Echo;WLFR86 LFBE;2021-03-30 01:00:00;CRA Nice;5555555;False;True;04:00;21:00;1;3;3;kmh;Europe/Paris;04:00;21:00;03:00;20:00;5555555
+FFFF;Foxtrot;WLFR86 LFBI;2021-03-30 01:00:00;CRA Nice;6666666;False;True;04:00;21:00;1;3;3;kmh;Europe/Paris;04:00;21:00;03:00;20:00;6666666
+GGGG;Golf;WLFR86 LFCR;2021-03-30 01:00:00;CRA Nice;7777777;False;True;04:00;21:00;1;3;3;kmh;Europe/Paris;04:00;21:00;03:00;20:00;7777777
+HHHH;Hotel;WLFR86 LFOB;2021-03-30 01:00:00;CRA Nice;8888888;False;True;04:00;21:00;1;3;3;kmh;Europe/Paris;04:00;21:00;03:00;20:00;8888888
+IIII;India;WLFR86 LFRD;2021-03-30 01:00:00;CRA Nice;9999999;False;True;04:00;21:00;1;3;3;kmh;Europe/Paris;04:00;21:00;03:00;20:00;9999999
+JJJJ;Juliett;WLFR86 LFTH;2021-03-30 01:00:00;CRA Nice;1111112;False;True;04:00;21:00;1;3;3;kmh;Europe/Paris;04:00;21:00;03:00;20:00;1111112
+LFPG;Roissy;WLFR86 LFPG;2021-03-30 01:00:00;CRA Nice;1111112;False;True;04:00;21:00;1;3;3;kmh;Europe/Paris;04:00;21:00;03:00;20:00;1111112

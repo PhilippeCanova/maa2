@@ -1,0 +1,204 @@
+{% load static %}
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="fr" lang="fr" dir="ltr">
+  <head>
+    <title>MAA</title>
+    <style type = "text/css">
+        <!--
+            @page {
+                size: A4 portrait;
+            }
+
+            body {
+            -webkit-print-color-adjust: exact !important; font-size: 16pt;
+            font-family:'Arial';
+            }
+            #page {size: A4 portrait;
+                /*background:linear-gradient(90deg, white, #ffffe8);*/
+                margin:0%; padding-left: 3mm; padding-right: 3mm;padding-top:15mm; 
+            }
+                
+            #content {
+                margin:10mm;
+                margin-top:0;
+                text-align: center;
+            }
+            #header>img{ 
+               display:inline-block; width: 15%;
+               vertical-align: middle;
+            }
+            #header>h1 {
+                display:inline-block; width: 85%; 
+                font-size: 150%;
+                color: #00508d;
+                vertical-align: middle;
+            }
+            #header {margin-bottom: 10mm; }
+            .lettre { color:red;}
+            #cadre { 
+                background-color: white;  padding:1mm; text-align: left;
+            }
+            hr{ height:7mm; color:#00508d; width:100%; background-color: #00508d; margin:0; }
+            h2 { text-align: center; }
+            #cadre table { width:95%; }
+            #cadre td { text-align: left; }
+            p.description { color: red; font-size:120%; }
+            p.message_original { padding-left: 10mm; }
+            .tableau_vent { font-size:8pt; width:100%; }
+            .tableau_vent tr td {text-align: center;}
+            .ventfx {color:red;}
+            .wind_picto { width:25pt; margin-bottom: 1mm}
+            .jour {color:white}
+            .heure00 {color:black}
+        -->       
+        
+    </style>
+    
+
+  </head>
+
+  <body>
+      <div id="page">
+        <div id="content">
+            <div id="header"><img src="{% static 'producteur/logo_mf.png' %}" alt="Météo-France" /><h1><span class="lettre">M</span>essage <span class="lettre">A</span>vertissement <span class="lettre">A</span>érodrome</h1></div>
+            <div id="cadre">
+                    <!--<hr>
+                    <h2>Message Avertissement Aérodrome</h2>-->
+                    <table>
+                        <tr><td>Origine :</td><td>Météo-France</td></tr>
+                        <tr><td class="repousse">Aérodrome :</td><td>{{envoimaa.configmaa.station.oaci }}<br></td></tr>
+                        <tr><td>Numéro :</td><td>{{ envoimaa.numero}}</td></tr>
+                        <tr><td class="repousse">Emis le :</td><td>{{ envoimaa.date_envoi|date:"D d à H:m"}} UTC<br></td></tr>
+                        {% if envoimaa.cancel is not True %}
+                            <tr><td>Validité du :</td><td>{{ envoimaa.date_debut|date:"D d à H:m"}} UTC</td></tr>
+                            <tr><td>Jusqu'au :</td><td>{{ envoimaa.date_fin|date:"D d à H:m"}} UTC</td></tr>
+                        {% endif %}
+                    </table>
+                    {% if envoimaa.description_maa is not None %}
+                        <p class="description">{{ envoimaa.description_maa }}</p>
+                    {% endif %}
+                    <p >Message original :</p>
+                        <p class="message_original">{{ envoimaa.message|linebreaksbr }}</p>
+                    
+                    {% if ff is not None %}
+                    <div id="container"></div>
+                    <script src="{% static 'producteur/highcharts.src.js' %}" ></script>
+                    <script src="{% static 'producteur/modules/windbarb.js' %}" ></script>
+                    <script src="{% static 'producteur/modules/exporting.js' %}" ></script>
+                    <script src="{% static 'producteur/modules/export-data.js' %}" ></script>
+                    <script src="{% static 'producteur/modules/accessibility.js' %}" ></script>
+
+                    <script>
+                        Highcharts.chart('container', {
+                        title: {
+                            text: 'Données de vent des 24 prochaines heures.'
+                        },
+
+                        xAxis: {
+                            type: 'datetime',
+                            offset: 40
+                        },
+                        yAxis: {
+                            title: { text: 'Force du vent ({{ wind_unit }})'},
+                        },
+                        plotOptions: {
+                            series: {
+                                pointStart: Date.UTC( {{ first_echeance }} ),
+                                pointInterval: 36e5,
+                                animation: false,
+                            }
+                        },
+
+                        series: [
+                        {
+                                name: 'Vent max',
+                                type: 'area',
+                                color: '#ff0000',
+                                data:  [{{ fx }}],
+                        },
+                        {
+                            type: 'windbarb',
+                            data: [ {{ ff }} ],
+                            name: 'Vent moyen',
+                            color: Highcharts.getOptions().colors[1],
+                            showInLegend: false,
+                            tooltip: {
+                                valueSuffix: ' {{ wind_unit}}'
+                            }
+                        }, {
+                            type: 'area',
+                            keys: ['y', 'rotation'], // rotation is not used here
+                            data: [ {{ ff }} ],
+                            color: Highcharts.getOptions().colors[0],
+                            fillColor: {
+                                linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
+                                stops: [
+                                    [0, Highcharts.getOptions().colors[0]],
+                                    [
+                                        1,
+                                        Highcharts.color(Highcharts.getOptions().colors[0])
+                                            .setOpacity(1).get()
+                                    ]
+                                ]
+                            },
+                            name: 'Vent moyen',
+                            tooltip: {
+                                valueSuffix: ' {{ wind_unit}}'
+                            },
+                            states: {
+                                inactive: {
+                                    opacity: 1
+                                }
+                            }
+                        }]
+
+                        });
+                    </script>
+                    {% endif %}
+
+
+                    {% if temperatures is not None %}
+                    <div id="container"></div>
+                    <script src="{% static 'producteur/highcharts.src.js' %}"></script>
+                    <script>
+                        Highcharts.chart('container', {
+                            title: {
+                                text: 'Données de température pour les 24 prochaines heures'
+                            },
+                            chart: {
+                                type: 'line'
+                            },
+                            plotOptions: {
+                                series: {
+                                    animation: false
+                                }
+                            },
+                            title: { text:null},
+                            xAxis: {
+                                categories: [{{ echeances }}],
+                            },
+                            yAxis: {
+                                title: {text: "Température (°C)"},
+                                plotLines: [{
+                                    color: '#FF0000',
+                                    width: 2,
+                                    value: {{ seuil }},
+                                }]
+                            },
+                            series: [{
+                                name: 'Température',
+                                data:  [{{ temperatures }}],
+                            },
+                            ]
+                        });
+                    </script>
+                    {% endif %}
+
+            </div>
+
+        </div>
+            
+      </div>
+  </body>
+</html>

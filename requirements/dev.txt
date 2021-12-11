@@ -1,0 +1,7 @@
+-r _base.txt
+coverage
+django-debug-toolbar
+selenium
+PyPDF3
+django-extensions
+pygraphviz

@@ -1,0 +1,17 @@
+{% extends "site/base.html" %}
+{% load i18n %} 
+{% block head %}
+<title>MAA</title>
+{% endblock %}
+{% block body %}
+
+Langue utilisée : <br>
+
+<ul>
+
+    <li><a href="{% url 'logout' %}?next=/">{% translate "Déconnexion" %}</a></li>
+    <li><a href="{% url 'accountsupdate' %}">{% translate "Modifier son profil" %}</a></li>
+    
+    
+</ul>
+{% endblock %}

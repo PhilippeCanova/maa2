@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<get_config_stations date="{{ heure_creation|date:"Y-m-d H:i:s" }}">
+<stations>
+{% for data in datas %}
+<station    station="{{ data.station.oaci }}" nom="{{ data.station.nom }}" date_pivot="{{ data.station.date_pivot|date:"Y-m-d H:i:s" }}" 
+            ouverture_ete="{{ data.station.ouverture_ete|date:"H:i" }}" fermeture_ete="{{ data.station.fermeture_ete|date:"H:i" }}" 
+            ouverture_hiver="{{ data.station.ouverture_hiver|date:"H:i" }}" fermeture_hiver="{{ data.station.fermeture_hiver|date:"H:i" }}" 
+            ouverture="{{ data.station.ouverture|date:"H:i" }}" fermeture="{{ data.station.fermeture|date:"H:i" }}" 
+            entete="{{ data.station.entete }}" 
+            retention="{{ data.station.retention }}" reconduction="{{ data.station.reconduction }}" delta_debut_repousse="{{ data.station.repousse }}" 
+            unite_vent="{{ data.station.wind_unit}}" dir="{{data.region.tag}}" fuseau="{{data.station.fuseau}}">
+<configs_maa>
+{% for config in data.configs %}
+<config_maa type="{{config.type_maa}}" seuil="{{ config.seuil}}" auto="{{ config.auto|yesno:"1,0" }}" 
+            scan="{{ config.scan}}" profondeur="{{config.profondeur}}" pause="{{config.pause}}" />
+{% endfor %}
+</configs_maa>
+<maas_en_cours>
+{% for envoi in data.maas %}
+<maa_en_cours   station="{{ envoi.configmaa.station.oaci }}" type="{{ envoi.configmaa.type_maa }}" seuil="{{ envoi.configmaa.seuil }}" 
+                date_envoi="{{ envoi.date_envoi|date:"Y-m-d H:i:s" }}" date_debut="{{ envoi.date_debut|date:"Y-m-d H:i:s" }}" 
+                date_fin="{{ envoi.date_fin|date:"Y-m-d H:i:s" }}" numero="{{ envoi.numero }}" />
+{% endfor %}
+</maas_en_cours>
+</station>
+{% endfor %}
+</stations>
+</get_config_stations>
