@@ -69,10 +69,10 @@
                         <tr><td>Origine :</td><td>Météo-France</td></tr>
                         <tr><td class="repousse">Aérodrome :</td><td>{{envoimaa.configmaa.station.oaci }}<br></td></tr>
                         <tr><td>Numéro :</td><td>{{ envoimaa.numero}}</td></tr>
-                        <tr><td class="repousse">Emis le :</td><td>{{ envoimaa.date_envoi|date:"D d à H:m"}} UTC<br></td></tr>
+                        <tr><td class="repousse">Emis le :</td><td>{{ envoimaa.date_envoi|date:"D d à H:i"|capfirst}} UTC<br></td></tr>
                         {% if envoimaa.cancel is not True %}
-                            <tr><td>Validité du :</td><td>{{ envoimaa.date_debut|date:"D d à H:m"}} UTC</td></tr>
-                            <tr><td>Jusqu'au :</td><td>{{ envoimaa.date_fin|date:"D d à H:m"}} UTC</td></tr>
+                            <tr><td>Validité du :</td><td>{{ envoimaa.date_debut|date:"D d à H:i"|capfirst}} UTC</td></tr>
+                            <tr><td>Jusqu'au :</td><td>{{ envoimaa.date_fin|date:"D d à H:i"|capfirst}} UTC</td></tr>
                         {% endif %}
                     </table>
                     {% if envoimaa.description_maa is not None %}

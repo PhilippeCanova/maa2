@@ -47,9 +47,7 @@ class ProductMAA(DetailView):
             first = echeances[0]
             context["first_echeance"] = "{},{},{},{}".format(first.year, first.month, first.day, first.hour) 
             context["ff"] = ",".join([ ff for ff in ffs])
-            context["fx"] = ",".join([ fx for fx in fxs])
-
-            
+            context["fx"] = ",".join([ fx for fx in fxs])       
 
         if context['envoimaa'].data_tempe:
             # On a des données tempé, on va faire en sourte de préparer les données pour le template

@@ -1,0 +1,26 @@
+<ul>
+    <li><a href="{% url 'admin:index' %}">Site amdin</a></li>
+    <li><a href="{% url 'past_data' %}">Formulaire de récupération des données passées</a></li>
+    <li><a href="{% url 'view_product_maa' pk=1 %}">MAA donné au format html (modifier l'id)</a></li>
+
+    <li><a href="{% url 'set_manuel_maa' %}?action=set_maa&station=LFPG&type_maa=TS&date_debut=2021-12-12 21:00:00&date_fin=2021-12-12 23:00:00&fcst=FCST">Poster un MAA manuel</a></li>
+    <li><a href="{% url 'set_manuel_maa' %}?action=unset_maa&station=LFPG&type_maa=TS">Annuler un MAA manuel</a></li>
+    
+    <li><a href="{% url 'set_manuel_maa' %}?action=get_historique_maa">Historique des MAA (toutes stations)</a></li>
+    <li><a href="{% url 'set_manuel_maa' %}?action=get_historique_maa&stations=LFPG,LFPB">Historique des MAA (certaines stations)</a></li>
+    
+    <li><a href="{% url 'set_manuel_maa' %}?action=get_config_stations">Config de toutes les stations</a></li>
+    <li><a href="{% url 'set_manuel_maa' %}?action=get_config_stations&stations=LFPG,LFPB">Config de certaines stations</a></li>
+    <li>API v2
+        <ul>
+            <li><a href="{% url 'liste_regions' %}">Liste des régions</a></li>
+            <li><a href="{% url 'liste_stations' %}">Liste des stations</a></li>
+            <li><a href="{% url 'config_maastation' oaci='LFPG' %}">Config MAA d'une station par oaci</a></li>
+            <li><a href="{% url 'detail_station_id' pk=1 %}">Config d'une station par pk</a></li>
+            <li><a href="{% url 'detail_station_oaci' oaci='LFPG' %}">Config d'une station par oaci</a></li>
+            <li><a href="{% url 'liste_config_maa' %}">Liste des configs MAA</a></li>
+        </ul>
+
+    </li>
+</ul>
+

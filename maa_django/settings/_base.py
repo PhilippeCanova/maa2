@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     'configurateur',
     'producteur',
     'profiles.apps.ProfilesConfig',
+    'maa_django.apps.core',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -126,6 +127,13 @@ LOCALE_PATHS = [
 
 WSGI_APPLICATION = 'maa_django.wsgi.application'
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'TIMEOUT': 3000,
+    }
+}
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
@@ -180,7 +188,7 @@ LANGUAGES = (
 #timestamp = get_git_changeset_timestamp(BASE_DIR)
 static_version = get_static_version(BASE_DIR)
 STATIC_URL = f'/maa_django/static/'
-STATIC_ROOT = Path(BASE_DIR, "maa_django/static")
+STATIC_ROOT = Path(BASE_DIR, "maa_django/static/")
 
 # versionnage
 #STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
@@ -202,10 +210,13 @@ sys.path = ["", EXTERNAL_LIBS_PATH, EXTERNAL_APPS_PATH] + sys.path
 LOGIN_URL = '/accounts/login/'
 #LOGOUT_REDIRECT_URL='/web/accounts/login/'
 
-RUNNING_SERVER = None # Pour la création des pdf à la volée. Nécessité de connaître le nom de domaine
-if 'manage.py' in sys.argv and len(sys.argv)>2:
-    RUNNING_SERVER = "http://" + sys.argv[2]
-    RUNNING_SERVER = "http://localhost:18868/maa_django/" # Pb metwork ?
+RUNNING_SERVER = None
+if 'manage.py' in sys.argv:
+    if len(sys.argv)>2:
+        RUNNING_SERVER = "http://" + sys.argv[2]
+    else:
+        RUNNING_SERVER = "http://localhost:18868/maa_django/" # Pb metwork ?
+    
 
 
 

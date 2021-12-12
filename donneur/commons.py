@@ -234,7 +234,7 @@ def retrieveDatasCDPQ_metropole(stations = None, remote_url = settings.REMOTE_CD
     
     # Définit l'url : 
     url = remote_url + "&".join([parametre + "=" + value for parametre, value in parametres.items()])
-    print (url)
+    #print (url)
 
     # Lance la requête
     lignes = request_data_cdp(url)

@@ -3,7 +3,6 @@ import io
 from datetime import datetime 
 import asyncio, urllib3
 from urllib3 import ProxyManager
-from pyppeteer import launch
 
 from django.conf import settings
 from django.core.files import File

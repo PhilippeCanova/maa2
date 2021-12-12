@@ -477,7 +477,7 @@ def create_maa_manuel(log, configmaa, date_envoi, debut, fin, fcst, supplement=N
     """ Permet d'ajouter une instance de EnvoiMAA suite à la demande d'un set_maa (manuel) 
         L'implémentation est à minima. Elle sera complétée par un cron recherchant les états to_create
     """
-    #TODO: ne pas oublier de voir comment le supplément est passé
+    
     try:
         numero = definie_numero_maa(configmaa.station.oaci, date_envoi)
         description = create_description(configmaa, fcst)

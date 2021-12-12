@@ -4,6 +4,9 @@ from html import escape
 from django.http.response import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
 from django.shortcuts import render
 from django.views.generic import View
+from django.views.decorators.cache import cache_page
+
+from django.utils.decorators import method_decorator
 
 from analyseur.models import EnvoiMAA
 from analyseur.production import create_maa_manuel, create_cnl_maa_manuel
@@ -22,6 +25,7 @@ def check_utcnow():
 
 
 class SetManuelMAA(View):
+    """ Ne gère pas que les maa manuel, il prend en compte toutes les requêtes maa_config.php historiques """
     ENTETE_XML = """<?xml version="1.0" encoding="UTF-8"?>"""
 
     USAGES = {
@@ -108,7 +112,7 @@ class SetManuelMAA(View):
         for cle in liste_params:
             param = request.GET.get(cle, None)
             if param is None:
-                return self.set_response_error("Le paramètre {} est requis.".format(param))
+                return self.set_response_error("Le paramètre {} est requis.".format(cle))
         return True       
         
     def check_format_date(self, liste_params, request, format):
@@ -177,6 +181,7 @@ class SetManuelMAA(View):
 
         # Check la présence des champs requis 
         valide = self.check_param_get_required(['action', 'station', 'type_maa', 'date_debut', 'date_fin', 'fcst'], request)
+
         if valide != True:
             return valide
 
@@ -184,7 +189,7 @@ class SetManuelMAA(View):
         valide = self.check_format_date(['date_debut', 'date_fin'], request, SetManuelMAA.FORMAT_DATE)
         if valide != True:
             return valide
-
+        
         # Check station ouverte
         DATE_NOW = check_utcnow()
         station = self.check_station_ouvert(request.GET.get('station'), DATE_NOW)
@@ -216,11 +221,10 @@ class SetManuelMAA(View):
         if fcst[:3] != 'OBS' and fcst[:3] != 'FCS':
             return self.set_response_error("Le paramètre fcst doit prendre l'une des valeurs suivantes : {}.".format(AutorisedMAAs.AUTORISED_FCST))
 
-
         # Génère le EnvoiMAA lié à une soumission auto en mode "to_create" pour prise en charge ultérieure
         try:
             log = "Création d'un MAA manuel pour la station {} saisi le {}".format(configmaa.station.oaci, datetime.utcnow())
-            envoi = create_maa_manuel(log, configmaa, DATE_NOW, debut, fin, fcst)
+            envoi = create_maa_manuel(log, configmaa, DATE_NOW, debut, fin, fcst, request.GET.get('supplement', None))
             #TODO: vérifier la prise en charge de fcst en tant que chaîne de caractère dans le PDF
             # Tout s'est déroulé correctement, on retourne l'acquitement avec le message brute
             return self.set_response_ok(envoi)
@@ -250,9 +254,10 @@ class SetManuelMAA(View):
         configmaa = self.check_type_maa(station, request)
         if not isinstance(configmaa, ConfigMAA):
             return configmaa
-
+        
         # Check s'il y a une MAA de ce type à canceller
-        maa_en_cours = EnvoiMAA.current_maas_by_type(station.oaci, configmaa.type_maa, DATE_NOW, seuil= configmaa.seuil)
+        maa_en_cours = EnvoiMAA.objects.current_maas_by_type(station.oaci, configmaa.type_maa, DATE_NOW, seuil= configmaa.seuil)
+        
         if maa_en_cours is None:
             return self.set_response_error("Pas de maa en cours de type {}-{} pour la station {}.".format(configmaa.type_maa, configmaa.seuil, station.oaci))
 
@@ -268,13 +273,15 @@ class SetManuelMAA(View):
             #TODO: faire remonter dans un log système
             return self.set_response_error("L'annulation du MAA a échoué. Veuillez contacter l'administrateur applicatif.")
 
+    @method_decorator(cache_page(60 * 1), name='dispatch')
     def get_historique_maa(self, request):
         """
             Retourne l'ensemble des MAA envoyés sur les dernières heures pour un ensemble de stations
             maa-conf/maa_config.php?action=get_historique_maa&stations=LFPG
         """
+
         # Check la présence des champs requis 
-        valide = self.check_param_get_required(['action', 'stations'], request)
+        valide = self.check_param_get_required(['action'], request)
         if valide != True:
             return valide
         
@@ -286,7 +293,11 @@ class SetManuelMAA(View):
         except:
             pass
 
-        stations = request.GET.get('stations').split(',')
+        stations = request.GET.get('stations', None)
+        if stations is None:
+            stations = [oaci for (oaci,) in Station.objects.all().values_list('oaci')]
+        else:
+            stations = request.GET.get('stations').split(',')
         data = []
         for station in stations:
             data.append({
@@ -326,28 +337,40 @@ class SetManuelMAA(View):
                 })
             return JsonResponse(json, safe=False)
 
+    @method_decorator(cache_page(60 * 1), name='dispatch')
     def get_config_stations(self, request):
         """
             Retourne l'ensemble des configurations d'une station, des maa configurés sur cette station et des maa en cours pour cette station
             maa_config.php?action=get_config_stations&stations=LFPG&format=xml|json
         """
         # Check la présence des champs requis 
-        valide = self.check_param_get_required(['action', 'stations'], request)
+        valide = self.check_param_get_required(['action'], request)
         if valide != True:
             return valide
         
         UTC_NOW = check_utcnow()
 
-        stations = request.GET.get('stations').split(',')
+        stations = request.GET.get('stations', None)
+        if stations is None:
+            stations = [oaci for (oaci,) in Station.objects.all().values_list('oaci')]
+        else:
+            stations = request.GET.get('stations').split(',')
         data = []
+
+        type_maa = request.GET.get('type_maa',  None)
+
         for station in stations:
             #current_maas_by_type(oaci, type_maa, heure= datetime.utcnow(), seuil=None)
             configs = []
             maas = []
-            query = ConfigMAA.objects.filter(station__oaci = station)
-            if len(query) == 0:
+            queryset = ConfigMAA.objects.filter(station__oaci = station)
+            
+            if type_maa is not None: # Ne considère que les configmaa d'un certain type
+                queryset = queryset.filter(type_maa=type_maa)
+
+            if len(queryset) == 0:
                 continue # La station n'est pas reconnue, on ne la traite pas
-            for config in ConfigMAA.objects.filter(station__oaci = station):
+            for config in queryset:
                 configs.append(config)
                 maa = EnvoiMAA.current_maas_by_type(station, config.type_maa, UTC_NOW, config.seuil)
                 if maa is not None:
@@ -390,7 +413,9 @@ class SetManuelMAA(View):
                 })
             return JsonResponse(json, safe=False)
 
+    #TODO: gérer le maa_en_cours
     def get(self, request):
+        self.format = 'xml'
         self.action = request.GET.get('action',None)
 
         if self.action =='set_maa':

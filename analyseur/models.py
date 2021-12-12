@@ -24,9 +24,10 @@ class EnvoiMAAQuerySet(QuerySet):
         """
         return self.filter(date_fin__gt = heure).filter(configmaa__station__oaci = oaci).order_by('-date_envoi')
     
-    def current_maas_by_type(self, oaci, type_maa, heure= datetime.utcnow(), seuil=None):
+    def current_maas_by_type(self, oaci, type_maa, heure = datetime.utcnow(), seuil = None):
         """ Permet de retourner le dernier MAA en cours de validité pour un type données 
             C'est donc une instance de EnvoiMAA s'il y en a un, ou None sinon """
+        print(oaci, type_maa, heure, seuil)
         selon_seuil = self.filter(date_fin__gt = heure).filter(configmaa__station__oaci = oaci)
         selon_seuil = selon_seuil.filter(configmaa__type_maa = type_maa).order_by('-date_envoi')
         if seuil is not None:

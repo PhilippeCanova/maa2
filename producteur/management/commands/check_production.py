@@ -11,4 +11,3 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         analyse_1mn()
-        
