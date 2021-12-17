@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.conf import settings
 from django.db.models.query import QuerySet
 
-from maa_django.models.mes_mixins import Activable
+from maa_django.mes_mixins import Activable
 
 TYPES_LOG = [
     ('error','Erreur'),

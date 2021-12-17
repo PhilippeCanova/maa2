@@ -2,13 +2,16 @@ import urllib3
 from pathlib import Path
 from unittest.mock import patch
 from datetime import datetime, timedelta, time
+from urllib3.packages.six import assertCountEqual
+
 
 from django.test import TestCase
 from django.db import models
 from django.test import LiveServerTestCase, RequestFactory
-from urllib3.packages.six import assertCountEqual
+
 
 from configurateur.models import Station, ConfigMAA, Region
+from configurateur.initiate_toolbox.initiate_db_tools import Initiate
 from donneur.commons import AeroDataStations, CDPDataStations, ManagerData
 from donneur.commons import retrieveDatasCDPH_om, retrieveDatasCDPQ_om, retrieveDatasAero
 from donneur.commons import retrieveDatasCDPH_metropole, retrieveDatasCDPQ_metropole
@@ -23,23 +26,9 @@ class AnalyseData_TestCase(TestCase):
             mais lancé une seule fois """
 
         # Insertion en base des données initiales. Permet d'avoir une liste des stations aéro
-        from maa_django.apps.core.management.commands.initiate import Initiate
         super().setUpClass()
         init = Initiate()
-        init.delete()
-        init.create()
-
-    def setUp(self):
-        """ Executée à chaque lancement d'une fonction test_ de cette classe 
-            TODO: enelever ensuite si pas utilisée.
-        """
-        pass
-
-    def tearDown(self):
-        """ Executée après chaque lancement d'une fonction test_ de cette classe 
-            TODO: enelever ensuite si pas utilisée.
-        """
-        pass
+        init.create_all_base_test()
 
     def get_data_tc(self, num_TC, fichier): 
         """ Récupère les données aéro et cdp du cas de TC cité """
@@ -49,7 +38,7 @@ class AnalyseData_TestCase(TestCase):
 
         fichier = repertoire.joinpath(fichier + '.csv')
         if not fichier.exists():
-            raise FileExistsError("Le ficheir {} n'existe pas".format(fichier) )
+            raise FileExistsError("Le fichier {} n'existe pas".format(fichier) )
         
         with open(fichier, 'r') as ficin:
             return ficin.read()
@@ -58,7 +47,7 @@ class AnalyseData_TestCase(TestCase):
 
     def get_stations(self):
         """ Permet de générer un tableau avec les infos des stations nécessaire au lancement des extractions """
-        stations_objects = Station.objects.all()
+        stations_objects = Station.objects.all() #Peut passer par un liste_values
         stations = []
         for station in stations_objects:
             stations.append(( station.oaci, station.inseepp, station.outremer ))
@@ -74,7 +63,6 @@ class AnalyseData_TestCase(TestCase):
             Retourne une liste ordonnée des types ayant déclenchés
         """
         positif = []
-        conforme = True
         if manager.question_declenche(oaci, echeance, 'VENT', 50): positif.append('VENT')
         if manager.question_declenche(oaci, echeance, 'TMIN', -1): positif.append('TMIN')
         if manager.question_declenche(oaci, echeance, 'TMAX', 30): positif.append('TMAX')
@@ -98,30 +86,30 @@ class AnalyseData_TestCase(TestCase):
         """ Test la bonne prise en charge des heures d'ouverture et fermeture.
             D'autres tests plus spécifiques sont faits dans ConfigurateurTestCase pour la prise en charge du changement d'heure
         """
-        # Test sur LFRQ fermée de 22TU à 05TU (selon config tempo des stations)
-        NOW = datetime(2021,11,12,12,0,0) # Milieu de journée, LFRQ est ouverte
+        # Test sur FFFF fermée de 22TU à 05TU (selon config tempo des stations)
+        NOW = datetime(2021,11,12,12,0,0) # Milieu de journée, FFFF est ouverte
         stations = define_open_airport(NOW)
-        self.assertEqual(type(stations.get(oaci="LFRQ")), Station)
+        self.assertEqual(type(stations.get(oaci="FFFF")), Station)
 
-        NOW = datetime(2021,11,12,0,0,0) # En pleine période de fermeture, LFRQ est fermée
+        NOW = datetime(2021,11,12,0,0,0) # En pleine période de fermeture, FFFF est fermée
         stations = define_open_airport(NOW)
-        self.assertRaises(Station.DoesNotExist, stations.get, oaci="LFRQ")
+        self.assertRaises(Station.DoesNotExist, stations.get, oaci="FFFF")
         
-        NOW = datetime(2021,11,12,22,0,0) # A l'heure pile de fermeture, LFRQ est ouverte
+        NOW = datetime(2021,11,12,22,0,0) # A l'heure pile de fermeture, FFFF est ouverte
         stations = define_open_airport(NOW)
-        self.assertEqual(type(stations.get(oaci="LFRQ")), Station)
+        self.assertEqual(type(stations.get(oaci="FFFF")), Station)
 
-        NOW = datetime(2021,11,12,22,1,0) # LFRQ encore ouverte
+        NOW = datetime(2021,11,12,22,1,0) # FFFF encore ouverte
         stations = define_open_airport(NOW)
-        self.assertRaises(Station.DoesNotExist, stations.get, oaci="LFRQ")
+        self.assertRaises(Station.DoesNotExist, stations.get, oaci="FFFF")
 
-        NOW = datetime(2021,11,12,4,59,0) # Une minute avant l'ouverture, LFRQ est encore fermée
+        NOW = datetime(2021,11,12,4,59,0) # Une minute avant l'ouverture, FFFF est encore fermée
         stations = define_open_airport(NOW)
-        self.assertRaises(Station.DoesNotExist, stations.get, oaci="LFRQ")
+        self.assertRaises(Station.DoesNotExist, stations.get, oaci="FFFF")
 
-        NOW = datetime(2021,11,12,5,0,0) # A l'heure pile de l'ouverture, LFRQ est enfin ouverte
+        NOW = datetime(2021,11,12,5,0,0) # A l'heure pile de l'ouverture, FFFF est enfin ouverte
         stations = define_open_airport(NOW)
-        self.assertEqual(type(stations.get(oaci="LFRQ")), Station)
+        self.assertEqual(type(stations.get(oaci="FFFF")), Station)
 
         # Pour LFPG, ouverture 00:00 et fermeture à 23:59
         NOW = datetime(2021,11,12,0,0,0) # LFPG est ouverte
@@ -142,6 +130,24 @@ class AnalyseData_TestCase(TestCase):
         station = Station.objects.get(oaci='LFPG')
 
         NOW = datetime.utcnow()
+
+        # Créé un EnvoiMAA TS pour LFPG
+        conf_maa = ConfigMAA.objects.get(station__oaci = 'LFPG', type_maa= 'TS')
+        envoi = EnvoiMAA.objects.create(
+            configmaa = conf_maa,
+            date_envoi = NOW - timedelta (hours= 3),
+            date_debut = NOW.replace(minute =0).replace(second=0) + timedelta (hours= 3),
+            date_fin = NOW.replace(minute =0).replace(second=0) + timedelta (hours= 8),
+            numero = 1,
+            fcst="FCST",
+            status = 'to_send',
+            message = """LFBT AD WRNG 1 VALID 201356/201500\nTS OBS.\nNO WARNING BEETWIN 00TU AND 04TU\n=""",
+            context_TAF = """context""",
+
+            log = "Ici, les logs de création",
+            message_mail = 'Corps du mail',
+            message_sms = "message SMS",)
+        envoi.save()
 
         # Récupère l'envoi configuré dans la base pour LFPG, pour un MAA de TS
         envoi = EnvoiMAA.objects.get(configmaa__station__oaci = 'LFPG')
@@ -176,7 +182,8 @@ class AnalyseData_TestCase(TestCase):
 
         
         # Test la récupération d'un maa de type seuil
-        config = ConfigMAA.objects.get(station__oaci = 'LFPG', type_maa = 'VENT', seuil=25.0)
+        config = ConfigMAA.objects.create(station = station, type_maa = 'VENT', seuil = 25.0, 
+                                            auto = False, pause = 2, scan = 12, profondeur = 12)
         envoi = EnvoiMAA.objects.create( 
             configmaa = config,
             date_envoi = NOW - timedelta (hours= 3),
@@ -213,8 +220,21 @@ class AnalyseData_TestCase(TestCase):
         NOW = datetime(2021,11,12,0,0,0)
 
         # Récupère l'envoi configuré dans la base pour LFPG, pour un MAA de TS
-        envoi = EnvoiMAA.objects.get(configmaa__station__oaci = 'LFPG')
-        #envoi.date_fin = NOW - timedelta(days=5) # Fait en sorte que le maa soit terminé
+        config = ConfigMAA.objects.create(station = station, type_maa = 'VENT', seuil = 25.0, 
+                                            auto = False, pause = 2, scan = 12, profondeur = 12)
+        envoi = EnvoiMAA.objects.create( 
+            configmaa = config,
+            date_envoi = NOW - timedelta (hours= 3),
+            date_debut = NOW.replace(minute =0).replace(second=0) + timedelta (hours= 3),
+            date_fin = NOW.replace(minute =0).replace(second=0) + timedelta (hours= 8),
+            numero = 1,
+            fcst=True,
+            status = 'to_send',
+            message = """LFBT AD WRNG 1 VALID 201356/201500""",
+            context_TAF = """0,35,""",
+            log = "Ici, les logs de création",
+            message_mail = 'Corps du mail',
+            message_sms = "message SMS",)
         envoi.date_fin = NOW + timedelta(minutes=150)
         envoi.date_envoi = NOW - timedelta(hours=2)
         envoi.save()
@@ -335,12 +355,11 @@ class AnalyseData_TestCase(TestCase):
         """
         from analyseur.production import create_raw_message
 
-        station, cree = Station.objects.get_or_create(oaci = "AAAA", nom = "Station test", entete= "WLFR67 LFST",  
-                    region = Region.objects.get(tag="DIRSE"), inseepp = "00000000", outremer = False, date_pivot = datetime.utcnow(), 
-                    ouverture = time(0,0), ouverture_ete = time(0,0), ouverture_hiver = time(0,0), 
-                    fermeture = time(23,0), fermeture_ete = time(23,0), fermeture_hiver = time(23,0), 
-                    retention = 1, reconduction = 1, repousse = 1, fuseau = "fuseau", 
-                    wind_unit = ('kt','kt'), temp_unit=('c',"°C"))
+        station = Station.objects.get(oaci = "AAAA")
+        # Pour éviter les problèmes de UNIQUE CONTRAINTS sur les config, on supprime celles qu'on a mis en base
+        configs = ConfigMAA.objects.filter(station = station)
+        for config in configs:
+            config.delete()
 
         configmaa = ConfigMAA.objects.create( station = station, type_maa = 'VENT', seuil = 10, auto = True, pause = 2, scan = 12, profondeur = 12)
         message = create_raw_message(configmaa, 1, datetime(2021,11,11,6,0,0), datetime(2021,11,11,8,0,0), "FCST")

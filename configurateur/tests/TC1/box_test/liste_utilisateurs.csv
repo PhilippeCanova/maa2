@@ -1,0 +1,6 @@
+username;email;pwd;is_superadmin;is_taf;tag_region;liste/groupes
+philippe;philippe.canova@met.fr;fr;True;True;;Super admin/Administrateur/Configurateur/Editeur manuel
+administrateur;administrateur@met.fr;fr;False;True;;Administrateur/Configurateur
+configurateur;configurateur@met.fr;fr;False;True;DIRSE;Configurateur
+expair;expair@met.fr;expair;False;False;;Editeur manuel
+

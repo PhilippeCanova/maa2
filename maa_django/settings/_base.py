@@ -191,7 +191,7 @@ STATIC_URL = f'/maa_django/static/'
 STATIC_ROOT = Path(BASE_DIR, "maa_django/static/")
 
 # versionnage
-#STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
 
 MEDIA_ROOT = Path(BASE_DIR).joinpath('media')
 MEDIA_URL = 'maa_django/media/'
@@ -213,9 +213,9 @@ LOGIN_URL = '/accounts/login/'
 RUNNING_SERVER = None
 if 'manage.py' in sys.argv:
     if len(sys.argv)>2:
-        RUNNING_SERVER = "http://" + sys.argv[2]
+        RUNNING_SERVER = "http://" + sys.argv[2] # Pour lancement en runserver
     else:
-        RUNNING_SERVER = "http://localhost:18868/maa_django/" # Pb metwork ?
+        RUNNING_SERVER = "http://localhost:18868" # Pour lancement en commande
     
 
 

@@ -22,47 +22,52 @@ class ProductMAA(DetailView):
         context = super().get_context_data(**kwargs)
         
         if context['envoimaa'].data_vent:
-            # On a des données vent, on va faire en sourte de préparer les données pour le template
-            # Rappelle (echeance, (ff,fx,dd)) => données en kt
-            # Changement d'unité si besoin 
-            data = json.loads(context['envoimaa'].data_vent)
-            station = context['envoimaa'].configmaa.station
-            # On reconstitue une série avec les formats nécessaires au  template :
-            echeances = []
-            ffs = []
-            fxs = []
-            context['wind_unit'] = 'kt'
-            for echeance, (ffkt, fxkt, dd) in data:
-                echeances.append(datetime.strptime(echeance, "%Y-%m-%d %H:%M:%S"))
-                ff, (tag, label) = station.get_wind_with_station_unit(ffkt)
-                if dd == 998 and ffkt <=3:
-                    ff = 0.1
-                ffs.append("[{},{}]".format(ff, dd))
-                context['wind_unit'] = label
-                fx, (tag, label) = station.get_wind_with_station_unit(fxkt)
-                if dd == 998 and fxkt <=3:
-                    fx=0.1
-                fxs.append(str(float(fx)))
+            try:
+                # On a des données vent, on va faire en sourte de préparer les données pour le template
+                # Rappelle (echeance, (ff,fx,dd)) => données en kt
+                # Changement d'unité si besoin 
+                data = json.loads(context['envoimaa'].data_vent)
+                station = context['envoimaa'].configmaa.station
+                # On reconstitue une série avec les formats nécessaires au  template :
+                echeances = []
+                ffs = []
+                fxs = []
+                context['wind_unit'] = 'kt'
+                for echeance, (ffkt, fxkt, dd) in data:
+                    echeances.append(datetime.strptime(echeance, "%Y-%m-%d %H:%M:%S"))
+                    ff, (tag, label) = station.get_wind_with_station_unit(ffkt)
+                    if dd == 998 and ffkt <=3:
+                        ff = 0.1
+                    ffs.append("[{},{}]".format(ff, dd))
+                    context['wind_unit'] = label
+                    fx, (tag, label) = station.get_wind_with_station_unit(fxkt)
+                    if dd == 998 and fxkt <=3:
+                        fx=0.1
+                    fxs.append(str(float(fx)))
 
-            first = echeances[0]
-            context["first_echeance"] = "{},{},{},{}".format(first.year, first.month, first.day, first.hour) 
-            context["ff"] = ",".join([ ff for ff in ffs])
-            context["fx"] = ",".join([ fx for fx in fxs])       
+                first = echeances[0]
+                context["first_echeance"] = "{},{},{},{}".format(first.year, first.month, first.day, first.hour) 
+                context["ff"] = ",".join([ ff for ff in ffs])
+                context["fx"] = ",".join([ fx for fx in fxs])       
+            except:
+                print("Erreur dans le formatag des données de vent pour la station de {}.".format(station.oaci))
 
         if context['envoimaa'].data_tempe:
-            # On a des données tempé, on va faire en sourte de préparer les données pour le template
-            # Rappelle (echeance, t°) => données en °C
-            data = json.loads(context['envoimaa'].data_tempe)
-            station = context['envoimaa'].configmaa.station
-            # On reconstitue une série avec les formats nécessaires au  template :
-            echeances = []
-            values = []
-            for echeance, t in data:
-                echeances.append(datetime.strftime( datetime.strptime(echeance, "%Y-%m-%d %H:%M:%S"), "%H"))
-                values.append(str(t))
-            
-            context["echeances"] = ",".join(echeances)
-            context["temperatures"] = ",".join(values)
-            context["seuil"] = str(context['envoimaa'].configmaa.seuil)
-
+            try:
+                # On a des données tempé, on va faire en sourte de préparer les données pour le template
+                # Rappelle (echeance, t°) => données en °C
+                data = json.loads(context['envoimaa'].data_tempe)
+                station = context['envoimaa'].configmaa.station
+                # On reconstitue une série avec les formats nécessaires au  template :
+                echeances = []
+                values = []
+                for echeance, t in data:
+                    echeances.append(datetime.strftime( datetime.strptime(echeance, "%Y-%m-%d %H:%M:%S"), "%H"))
+                    values.append(str(t))
+                
+                context["echeances"] = ",".join(echeances)
+                context["temperatures"] = ",".join(values)
+                context["seuil"] = str(context['envoimaa'].configmaa.seuil)
+            except:
+                print("Erreur dans le formatag des données de température pour la station de {}.".format(station.oaci))
         return context

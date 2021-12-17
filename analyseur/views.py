@@ -11,7 +11,7 @@ from django.utils.decorators import method_decorator
 from analyseur.models import EnvoiMAA
 from analyseur.production import create_maa_manuel, create_cnl_maa_manuel
 from configurateur.models import Station, AutorisedMAAs, ConfigMAA
-from analyseur.decorators import basicauth, has_perm_expair
+from maa_django.decorators import basicauth, has_perm_expair
 
 
 from rest_framework.authentication import BasicAuthentication

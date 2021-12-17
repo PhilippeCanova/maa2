@@ -44,7 +44,7 @@ def request_data_cdp(url):
     data = None
     http = urllib3.ProxyManager(PROXY_METEO)
     try: 
-        r = http.request('GET', url, timeout=10.0)
+        r = http.request('GET', url, timeout=30.0)
             
         if r.status != 200:
             print ("De requête du cdp aéro : {}\nCode retour : {}".format(url, r.status))
@@ -141,7 +141,7 @@ def retrieveDatasCDPH_metropole(stations = None, remote_url = settings.REMOTE_CD
     """
     reponse = {}
     parametres = {}
-    parametres['dpivot'] = "-48,60"  # Permet de faire la demande sur -3h à 48h 
+    parametres['dpivot'] = "-30,48"  # Permet de faire la demande sur -3h à 48h 
     parametres['format'] = 'csv'    # Réponse du SA CDP en csv 
     parametres['param'] = ','.join([externe for interne, externe in CDPDataHoraire.PARAMETRES_CDPH] )
     parametres['id'] = ",".join([insee for oaci, insee in stations])
@@ -766,6 +766,11 @@ class AeroDataStations(object):
         """
         for oaci, liste in conteneur.items():
             self.stations[oaci] = AeroDataStation(liste)
+        
+        # Vérifie si toutes les stations ont bien un contexte aéro
+        for station in Station.objects.filter(active = True):
+            if station.oaci not in self.stations.keys():
+                print("La station {} n'a pas contexte aéronautique.".format(station.oaci))
 
     def getStation(self, oaci):
         """ Retourne le conteneur de données d'une station particulière oaci"""
@@ -1429,7 +1434,8 @@ def provide_manager (stations):
     """
 
     # Chargement des données Aéro
-    aeros = retrieveDatasAero([ (station.oaci, station.inseepp, station.outremer) for station in stations if not station.outremer])
+    print("Récupération des données aéronautiques...")
+    aeros = retrieveDatasAero([ (station.oaci, station.inseeaero, station.outremer) for station in stations])
     datas_aero = AeroDataStations()
     datas_aero.load_datas(aeros)
 
@@ -1437,15 +1443,21 @@ def provide_manager (stations):
 
     # Chargement des données métropole
     stations_metro = [ (station.oaci, station.inseepp) for station in stations if not station.outremer]
+    print("Récupération des données CDP H métro...")
     cdph = retrieveDatasCDPH_metropole( stations_metro)
+    print("Récupération des données CDP Q métro...")
     cdpq = retrieveDatasCDPQ_metropole (stations_metro)
     datas.load_datas(cdph, False)
     datas.load_daily_datas(cdpq, datas, False) # Ajout des données quotidiennes pas encore implémenté
 
     # Chargement des données outre-mer
     stations_om = [(station.oaci, station.inseepp) for station in stations if station.outremer]
+    print("Récupération des données CDP H outre-mer...")
     cdph_om = retrieveDatasCDPH_om(stations_om)
+    print("Récupération des données CDP Q outre-mer...")
     cdpq_om = retrieveDatasCDPQ_om(stations_om)
+
+    print("Assemblage des données...")
     datas.load_datas(cdph_om, True)
     datas.load_daily_datas(cdpq_om, datas, True) # Ajout des données quotidiennes pas encore implémenté
         

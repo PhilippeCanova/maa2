@@ -224,7 +224,7 @@ def create_description(configmaa, fcst):
         return maa.get_description(fcst, int(seuil), at, force_unit=unite)
     
     else:
-        return maa.get_description(fcst, None, at)
+        return maa.get_description(fcst, configmaa.seuil, at)
 
 def create_description_cnl(maa_precedent):
         """ Détermine le message qui annonce quel MAA a été annulé 

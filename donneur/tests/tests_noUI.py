@@ -348,6 +348,8 @@ class RetrieveData_TestCase(TestCase, StaticLiveServerTestCase):
 
         create_maa_auto('Test de MAA vent avec data vent', manager_cdp, configmaa, heure_analyse, heure_analyse, heure_analyse)
         
+        from producteur.commons import analyse_1mn
+        analyse_1mn()
         # Nota : Doit retrouver le pdf associer dans /media/upload/MM/JJ ave cun graphique
         #print(data_vent)
     

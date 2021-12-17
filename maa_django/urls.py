@@ -58,8 +58,7 @@ urlpatterns = [
     
     path('adminMAA/', admin.site.urls, name='admin_site'),
     path('', include('maa_django.apps.site.urls'), name='accueil'),
-
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] 
 
 # ADDED BY METWORK/MFSERV/DJANGO PLUGIN TEMPLATE
 # TO PROVIDE PREFIX BASED ROUTING
@@ -67,5 +66,6 @@ from django.conf.urls import include, url
 PREFIXES = [r"^maa_django/"]
 urlpatterns = [url(x, include(urlpatterns)) for x in PREFIXES]
 
-#<!--<li><a href="{% url 'config_maastation' oaci='LFPG' %}">Config MAA d'une station par oaci</a></li>-->
-#<!--<li><a href="{% url 'detail_station_oaci' oaci=LFPG %}">Config d'une station par oaci</a></li>-->
+# Instruction mise après Metwork de manière à ne pas avoir de problèmes avec le formulaire 
+# admin montrant les fichiers MAA générés
+urlpatterns = urlpatterns + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

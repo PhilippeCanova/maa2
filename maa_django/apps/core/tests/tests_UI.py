@@ -1,4 +1,4 @@
-from django.test import TestCase
+'''from django.test import TestCase
 from django.test import LiveServerTestCase
 import pdb;
 
@@ -70,4 +70,4 @@ class ConnexionTestCase(LiveServerTestCase):
         self.assertEqual(headers[0].text, 'CODE OACI')
 
         # Si une nouvelle fenêtre s'ouvre pour la saisie, Selenium peut y accéder avec :
-        #self.browser.switch_to.window(self.browser.window_handles[1])
+        #self.browser.switch_to.window(self.browser.window_handles[1])'''

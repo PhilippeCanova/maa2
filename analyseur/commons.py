@@ -11,6 +11,8 @@
 """
 from datetime import datetime, time, timedelta
 
+from mflog import get_logger
+
 from configurateur.models import Station, ConfigMAA
 from analyseur.models import EnvoiMAA
 from configurateur.utils import chek_and_change_pivot_date
@@ -52,6 +54,7 @@ def recherche_debut_maa(assembleur, oaci, periode_debut, configmaa):
     """ Sur la période acceptable de début MAA, on cherche s'il y a une heure déclenchante pour le type de MAA donné 
         Retourne le datetime du premier déclenchement ou None si rien trouvé.
     """
+
     for echeance in periode_debut:
 
         """if oaci == 'LFRN' and configmaa.type_maa == 'TS':
@@ -59,6 +62,10 @@ def recherche_debut_maa(assembleur, oaci, periode_debut, configmaa):
             print(assembleur.question_declenche(oaci, echeance, configmaa.type_maa, configmaa.seuil))
             print(assembleur.aero.stations['LFRN'].ordered_echeances[0], assembleur.aero.stations['LFRN'].ordered_echeances[-1])
             print()"""
+
+        """if oaci == 'LFRK' and configmaa.type_maa == 'TMIN':
+            print(echeance, configmaa.seuil, oaci, assembleur.question_declenche(oaci, echeance, configmaa.type_maa, configmaa.seuil))
+            print(assembleur.get_tempe(oaci, echeance))"""
 
         if assembleur.question_declenche(oaci, echeance, configmaa.type_maa, configmaa.seuil):
             return echeance
@@ -98,11 +105,15 @@ def recherche_fin_maa(assembleur, oaci, heure_debut_declenche, configmaa):
 def analyse_15mn(heure_analyse=datetime.utcnow()):
 
     # Met à jour les heures d'ouverture et de fermeture
+    logger = get_logger("analyse_15mn")
+    logger.info(f"Vérification du changement d'heure...")
     chek_and_change_pivot_date() 
 
     # Récupère un queryset des stations en cours de production
+    logger.info(f"Récupération des stations à traiter...")
     stations = define_open_airport(heure_analyse)
 
+    logger.info(f"Chargement des données sur le SA CDP...")
     manager_cdp = provide_manager(stations)
 
     # Parmi les stations en cours d'exploitation, détermine les MAA automatique à analyser
@@ -134,6 +145,7 @@ def analyse_15mn(heure_analyse=datetime.utcnow()):
                 if maa_en_cours is not None and delai_retention_depasse(heure_analyse, maa_en_cours):
                     if not bientot_fini(heure_analyse, maa_en_cours):
                         log = "Génère un cas 5 (annulation pour {} effet immédiat".format(station.oaci)
+                        logger.info(log)
                         groupe_envoi.append({'log':log, 'configmaa':configmaa, 'creation': False, 
                                              'debut': None, 'fin': None, 'maa_annule': maa_en_cours})
                         
@@ -146,6 +158,24 @@ def analyse_15mn(heure_analyse=datetime.utcnow()):
             heure_fin_potentielle = recherche_fin_maa(manager_cdp, station.oaci, heure_debut_declenche, configmaa)
             #TODO: tester la recherche potentielle d'heure de fin. 
 
+            """if station.oaci == 'LFRH' and configmaa.type_maa == 'FG':
+                print("debut declenche", heure_debut_declenche)
+                print("fin declenche", heure_fin_potentielle)"""
+                
+
+            if maa_en_cours is None:
+                # S'il n'y avait pas de MAA en cours et que le nouveau se termine avant l'heure d'analyse, le 
+                # phénomène est obsoluète, on laisse tombé. 
+                if heure_fin_potentielle < heure_analyse:
+                    continue
+
+                # Pas de MAA en cours, donc mais ici, on a un MAA en vue, donc il faut le générer :
+                log = "Génère un MAA pour {} de type {}/{} de {} à {}\n".format(station.oaci, configmaa.type_maa, configmaa.seuil, heure_debut_declenche, heure_fin_potentielle)
+                log = log + "Il n'y avait pas d'autres MAA en cours.\n"
+                logger.info(log)
+                groupe_envoi.append({'log':log, 'configmaa':configmaa, 'creation': True, 'debut': heure_debut_declenche, 'fin': heure_fin_potentielle})
+                continue
+            
             # On a donc maintenant un MAA en cours et un MAA potentiel. On va faire une suite de tests permettant
             # de savoir s'il y a opportunité d'envoyer un nouveau MAA. (cf spec DP-8)
             # Nomenclature : 
@@ -169,34 +199,42 @@ def analyse_15mn(heure_analyse=datetime.utcnow()):
             test4 = heure_analyse < maa_en_cours.date_debut
             test5 = heure_debut_declenche > (maa_en_cours.date_debut + timedelta(hours = repousse))
             test6 = heure_debut_declenche > (heure_analyse + timedelta(hours = repousse))
-            test7 = heure_fin_potentielle <= ( maa_en_cours.date_fin + timedelta(hours = repousse))
+            test7 = heure_fin_potentielle <= ( maa_en_cours.date_fin - timedelta(hours = repousse))
             test8 = heure_debut_declenche > maa_en_cours.date_fin
             #test9 = heure_fin_potentielle <= (maa_en_cours.date_fin + timedelta(hours = repousse))
             test10 = heure_analyse >= (maa_en_cours.date_fin - timedelta(hours = reconduction))
 
             if not test1 and test2 and test3 and test4 and test5:
                 log = "Génère un cas 1-1 pour {} de type {}/{} de {} à {}\n".format(station.oaci, configmaa.type_maa, configmaa.seuil, heure_debut_declenche, heure_fin_potentielle)
+                logger.info(log)
                 groupe_envoi.append({'log':log, 'configmaa':configmaa, 'creation': True, 'debut': heure_debut_declenche, 'fin': heure_fin_potentielle})
             elif not test1 and test2 and test3 and not test4 and test6:
                 log = "Génère un cas 1-2 pour {} de type {}/{} de {} à {}\n".format(station.oaci, configmaa.type_maa, configmaa.seuil, heure_debut_declenche, heure_fin_potentielle)
+                logger.info(log)
                 groupe_envoi.append({'log':log, 'configmaa':configmaa, 'creation': True, 'debut': heure_debut_declenche, 'fin': heure_fin_potentielle})
             elif not test1 and test2 and test3 and not test4 and not test6 and test7:
                 log = "Génère un cas 1-3 pour {} de type {}/{} de {} à {}\n".format(station.oaci, configmaa.type_maa, configmaa.seuil, heure_debut_declenche, heure_fin_potentielle)
+                logger.info(log)
                 groupe_envoi.append({'log':log, 'configmaa':configmaa, 'creation': True, 'debut': heure_debut_declenche, 'fin': heure_fin_potentielle})
             elif test1:
                 log =  "Génère un cas 2 pour {} de type {}/{} de {} à {}\n".format(station.oaci, configmaa.type_maa, configmaa.seuil, heure_debut_declenche, heure_fin_potentielle)
+                logger.info(log)
                 groupe_envoi.append({'log':log, 'configmaa':configmaa, 'creation': True, 'debut': heure_debut_declenche, 'fin': heure_fin_potentielle})
             elif not test1 and test2 and not test3 and test4 and not test8:
                 log = "Génère un cas 3-1 pour {} de type {}/{} de {} à {}\n".format(station.oaci, configmaa.type_maa, configmaa.seuil, heure_debut_declenche, heure_fin_potentielle)
+                logger.info(log)
                 groupe_envoi.append({'log':log, 'configmaa':configmaa, 'creation': True, 'debut': heure_debut_declenche, 'fin': heure_fin_potentielle})
             elif not test1 and test2 and not test3 and not test4 and test6 and not test8 and not test10:
                 log = "Génère un cas 3-2 pour {} de type {}/{} de {} à {}\n".format(station.oaci, configmaa.type_maa, configmaa.seuil, heure_debut_declenche, heure_fin_potentielle)
+                logger.info(log)
                 groupe_envoi.append({'log':log, 'configmaa':configmaa, 'creation': True, 'debut': heure_debut_declenche, 'fin': heure_fin_potentielle})
             elif not test1 and test2 and not test3 and not test4 and not test8 and test10:
                 log = "Génère un cas 3-3 pour {} de type {}/{} de {} à {}\n".format(station.oaci, configmaa.type_maa, configmaa.seuil, heure_debut_declenche, heure_fin_potentielle)
+                logger.info(log)
                 groupe_envoi.append({'log':log, 'configmaa':configmaa, 'creation': True, 'debut': heure_debut_declenche, 'fin': heure_fin_potentielle})
             elif not test1 and test2 and not test3 and test8 :
                 log = "Génère un cas 4 pour {} de type {}/{} de {} à {}\n".format(station.oaci, configmaa.type_maa, configmaa.seuil, heure_debut_declenche, heure_fin_potentielle)
+                logger.info(log)
                 groupe_envoi.append({'log':log, 'configmaa':configmaa, 'creation': True, 'debut': heure_debut_declenche, 'fin': heure_fin_potentielle})
 
         total = len(groupe_envoi)

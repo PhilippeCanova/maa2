@@ -1,5 +1,5 @@
 import datetime, time
-from unittest.mock import patch
+'''from unittest.mock import patch
 from selenium import webdriver # Pour utiliser Selenium
 import urllib3
 
@@ -113,4 +113,4 @@ class ConnexionTestCase(LiveServerTestCase):
         # he sees an Album form
 
         # After creating the Album, he goes back to finish
-        # the Track
+        # the Track'''

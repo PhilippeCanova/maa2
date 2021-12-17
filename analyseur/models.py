@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from django.db import models
 from django.db.models.query import QuerySet
 
-from maa_django.models.mes_mixins import Activable
+from maa_django.mes_mixins import Activable
 from configurateur.models import ConfigMAA
 
 
@@ -27,7 +27,6 @@ class EnvoiMAAQuerySet(QuerySet):
     def current_maas_by_type(self, oaci, type_maa, heure = datetime.utcnow(), seuil = None):
         """ Permet de retourner le dernier MAA en cours de validité pour un type données 
             C'est donc une instance de EnvoiMAA s'il y en a un, ou None sinon """
-        print(oaci, type_maa, heure, seuil)
         selon_seuil = self.filter(date_fin__gt = heure).filter(configmaa__station__oaci = oaci)
         selon_seuil = selon_seuil.filter(configmaa__type_maa = type_maa).order_by('-date_envoi')
         if seuil is not None:
@@ -50,7 +49,9 @@ class EnvoiMAAQuerySet(QuerySet):
             Si liste_stations est passée, c'est la liste des codes oaci des aéroports concernés
         """
         avant = maintenant - timedelta(hours=nb_heures)
-        filtre = self.filter(configmaa__station__oaci__in = liste_stations)
+        filtre = self
+        if liste_stations is not None:
+            filtre = filtre.filter(configmaa__station__oaci__in = liste_stations)
         return filtre.filter(date_envoi__gt = avant).order_by('configmaa__station__oaci').order_by('-date_envoi')
 
 class EnvoiMAA(models.Model):

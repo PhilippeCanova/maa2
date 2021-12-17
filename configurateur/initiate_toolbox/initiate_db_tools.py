@@ -413,230 +413,23 @@ class Initiate(object):
         except:
             pass
 
-    def create(self):
-        # Lecture des configs station
-        base_dir = Path(__file__).parent.joinpath('box_oper')
-        fichier_conf_station = base_dir.joinpath('config_station.csv')
-
-        configs = ConfigsStation(fichier_conf_station)
-
-        # Lecture des correspondances OACI - insee
-        fichier_correspondance = base_dir.joinpath('correspondanceMAA.csv')
-        correspondance = Initiate.set_correspondance_oaci_inseepp(fichier_correspondance)
-        
-        # Création des régions
-        dirs = configs.get_dirs()
-        dirs_objects = {}
-        for dir in dirs:
-            dirs_objects[dir] = Region.objects.create(tag=dir)
-
-        # Création des stations
-        for oaci, config in configs.stations.items():
-            if oaci in correspondance.keys():
-                inseepp = correspondance[oaci]
-                outremer = False
-                if inseepp[:2] > '95':
-                    outremer = True
-                Station.objects.create( oaci= oaci,
-                                    nom = config.nom,
-                                    entete = config.entete,
-                                    date_pivot = config.date_pivot,
-                                    region = dirs_objects[config.dir],
-                                    inseepp = inseepp,
-                                    outremer = outremer,
-                                    active = True,
-                                    ouverture = config.ouverture, ouverture_ete = config.ouverture_ete, ouverture_hiver = config.ouverture_hiver, 
-                                    fermeture = config.fermeture, fermeture_ete = config.fermeture_ete, fermeture_hiver = config.fermeture_hiver, 
-                                    retention = config.retention,
-                                    reconduction = config.reconduction,
-                                    repousse = config.delta_debut_repousse,
-                                    wind_unit = config.unite_vent,
-                                    temp_unit = config.unite_tempe,
-                                    fuseau = config.fuseau,
-                                    )
-            else:
-                print ("Station sans correspondance OACI-inseepp", oaci)
-
-        
-        configurateur, create = Group.objects.get_or_create(name="Configurateur")
-        administrateur, create = Group.objects.get_or_create(name="Administrateur")
-        superadmin, create = Group.objects.get_or_create(name="Super admin")
-        maa_manuel, create = Group.objects.get_or_create(name="Editeur manuel")
-        
-        
-        # Droits sur Station
-        content_Station = ContentType.objects.get_for_model(Station)
-        configurateur.permissions.add(Permission.objects.get(codename='view_station', content_type=content_Station))
-        configurateur.permissions.add(Permission.objects.get(codename='change_station', content_type=content_Station))
-        
-        superadmin.permissions.add(Permission.objects.get(codename='delete_station', content_type=content_Station))
-
-        administrateur.permissions.add(Permission.objects.get(codename='add_station', content_type=content_Station))
-
-        # Droits sur Région
-        content_Region = ContentType.objects.get_for_model(Region)
-        administrateur.permissions.add(Permission.objects.get(codename='view_region', content_type=content_Region))
-        administrateur.permissions.add(Permission.objects.get(codename='change_region', content_type=content_Region))
-        administrateur.permissions.add(Permission.objects.get(codename='add_region', content_type=content_Region))
-        superadmin.permissions.add(Permission.objects.get(codename='delete_region', content_type=content_Region))
-
-        # Droits sur Profil
-        content_Region = ContentType.objects.get_for_model(Profile)
-        content_User = ContentType.objects.get_for_model(User)
-
-        administrateur.permissions.add(Permission.objects.get(codename='view_profile', content_type=content_Region))
-        administrateur.permissions.add(Permission.objects.get(codename='view_user', content_type=content_User))
-        administrateur.permissions.add(Permission.objects.get(codename='change_profile', content_type=content_Region))
-        administrateur.permissions.add(Permission.objects.get(codename='change_user', content_type=content_User))
-        administrateur.permissions.add(Permission.objects.get(codename='add_profile', content_type=content_Region))
-        administrateur.permissions.add(Permission.objects.get(codename='add_user', content_type=content_User))
-
-        superadmin.permissions.add(Permission.objects.get(codename='delete_profile', content_type=content_Region))
-        superadmin.permissions.add(Permission.objects.get(codename='delete_user', content_type=content_User))
-        
-
-        # Droits sur les configMAA
-        content_ConfiMAA = ContentType.objects.get_for_model(ConfigMAA)
-        # => crée une autorisation de modifier les paramètres fins des config MAA
-        change_fin, nope = Permission.objects.get_or_create(codename = 'expert_configmaa', name="Can specify configMAA", content_type=content_ConfiMAA)
-        administrateur.permissions.add(change_fin)
-        superadmin.permissions.add(change_fin)
-
-        configurateur.permissions.add(Permission.objects.get(codename='view_configmaa', content_type=content_ConfiMAA))
-        configurateur.permissions.add(Permission.objects.get(codename='change_configmaa', content_type=content_ConfiMAA))
-        configurateur.permissions.add(Permission.objects.get(codename='add_configmaa', content_type=content_ConfiMAA))
-        configurateur.permissions.add(Permission.objects.get(codename='delete_configmaa', content_type=content_ConfiMAA))
-
-
-        # Droits sur les envoi MAA
-        envoi_maa = ContentType.objects.get_for_model(EnvoiMAA)
-        configurateur.permissions.add(Permission.objects.get(codename='view_envoimaa', content_type=envoi_maa))
-        # Créé un droit particulier pour éditer des maa manuels
-        edit_manuel, nope = Permission.objects.get_or_create(codename = 'envoimaa_manuel', name="Can Send manual MAA", content_type=envoi_maa)
-        maa_manuel.permissions.add(edit_manuel)
-        
-        """configurateur.permissions.add(Permission.objects.get(codename='add_envoimaa', content_type=envoi_maa))
-        configurateur.permissions.add(Permission.objects.get(codename='change_envoimaa', content_type=envoi_maa))
-        configurateur.permissions.add(Permission.objects.get(codename='delete_envoimaa', content_type=envoi_maa))
-        """
-
-        """permission, create = Permission.objects.get_or_create(codename='can_view', name='Can view station', content_type=content_Station)
-        configurateur.permissions.add(permission)
-
-        permission, create = Permission.objects.get_or_create(codename='can_delete', name='Can delete station', content_type=content_Station)
-        superadmin.permissions.add(permission)
-
-        permission, create = Permission.objects.get_or_create(codename='can_add', name='Can add station', content_type=content_Station)
-        administrateur.permissions.add(permission)
-        """
-
-
-        # Création des profils
-        users = User.objects.all()
-        for user in users:
-            if user.is_superuser:
-                user.groups.add(administrateur)
-                user.groups.add(configurateur)
-                user.groups.add(superadmin)
-        # Pour la création du superuser, on doit pouvoir passer par :
-        #from django.contrib.auth import get_user_model
-        #get_user_model().objects.create_superuser
-        user = User.objects.create_superuser('philippe', 'philippe.canova@meteo.fr', 'fr')
-        user.is_staff = True
-        #user.profile.region = Region.objects.get(tag = "DIRN")
-        user.groups.add(superadmin)
-        user.groups.add(administrateur)
-        user.groups.add(configurateur)
-        user.save()
-
-
-        user = User.objects.create_user('administrateur', 'monique.le@meteo.fr', 'djangofr')
-        user.is_staff = True
-        user.profile.region = Region.objects.get(tag = "DIRN")
-        user.groups.add(administrateur)
-        user.groups.add(configurateur)
-        user.save()
-
-        user = User.objects.create_user('expair', 'expair.le@meteo.fr', 'expair')
-        user.is_staff = False
-        user.groups.add(maa_manuel)
-        user.save()
-
-        user = User.objects.create_user('configurateur', 'config.le@meteo.fr', 'djangofr')
-        user.is_staff = True
-        user.profile.region = Region.objects.get(tag = "DIRN")
-        user.groups.add(configurateur)
-        user.save()
-        
-        fichier = base_dir.joinpath('table config_maa.csv')
-        configs = ConfMAA.loadConfigs(fichier, configs.stations)
-
-        t = []
-        for conf in configs:
-                station = Station.objects.get(oaci=conf.station)
-                ConfigMAA.objects.create(
-                    station = station,
-                    type_maa = conf.type_maa,
-                    auto = conf.auto,
-                    seuil = conf.seuil,
-                    pause = conf.pause,
-                    scan = conf.scan,
-                    profondeur = conf.profondeur
-                )
-                t.append(conf.type_maa)
-        
-        conf_maa = ConfigMAA.objects.get(station__oaci = 'LFPG', type_maa= 'TS')
-        envoi = EnvoiMAA.objects.create(
-            configmaa = conf_maa,
-            date_envoi = datetime.datetime.utcnow() - datetime.timedelta (hours= 3),
-            date_debut = datetime.datetime.utcnow().replace(minute =0).replace(second=0) + datetime.timedelta (hours= 3),
-            date_fin = datetime.datetime.utcnow().replace(minute =0).replace(second=0) + datetime.timedelta (hours= 8),
-            numero = 1,
-            fcst="FCST",
-            status = 'to_send',
-            message = """LFBT AD WRNG 1 VALID 201356/201500\nTS OBS.\nNO WARNING BEETWIN 00TU AND 04TU\n=""",
-            context_TAF = """context""",
-
-            log = "Ici, les logs de création",
-            message_mail = 'Corps du mail',
-            message_sms = "message SMS",
-            
-        )
-        #with open(base_dir.joinpath('MAAx.pdf'), 'rb') as f:
-        #    envoi.message_pdf.save("MAA_LFPG_TS_1_20210824052410_1.pdf", File(f))
-        
-        client = Client(
-            nom = "Canova",
-            prenom = "Philipp",
-            telephone = "00000000",
-            email = "philippe.canova@meteo.fr",
-        )
-        client.save()
-        client.configmaas.add(conf_maa)
-
-        dest_mail = MediumMail.objects.create(
-            client = client,
-            email = "ph.cano@free.fr"
-        )
-
-        # Crée un log :
-        log = Log(
-            type = 'error',
-            machine = settings.MACHINE,
-            code = '000',
-            message = 'Initiate'
-        )
-        log.save()
-
     def check_ressource(self, path):
         """ Fait la vérification d'usage pour le fichier """
         path_file = self.box.joinpath(path)
         if not path_file.exists():
             raise FileExistsError("Le chemin {} n'existe pas. Les données ne peuvent pas être initialisées.".format(path_file))
         
-    def __init__(self, box="box_test"):
-        """ box nomme le répertoire contenant les fichiers configuration à installer """
-        rep = Path(__file__).parent
+    def __init__(self, box="box_test", repertoire=None):
+        """ box nomme le répertoire contenant les fichiers configuration à installer 
+            Par défaut, on va chercher les fichiers dans le répertoire voisin box.
+
+            Pour le rejeu, on peut modifier le comportement et aller dans un autre répertoire (exemple de TC)
+            repertoire est alors le parent de box
+        """
+        if repertoire is None:
+            rep = Path(__file__).parent
+        else:
+            rep = repertoire
         self.box = rep.joinpath(box)
         self.check_ressource(self.box)
 
@@ -652,13 +445,18 @@ class Initiate(object):
         self.create_configsmaa()
         #self.create_client()
 
-    def create_all_base_test(self):
+    def create_all_base_test(self, with_real_configmaa=False):
         """ Instancie toutes les tables en une seule commande """
         self.create_region()
         self.create_group_and_permissions()
         self.create_users()
         self.create_stations()
-        self.create_full_configmaa()
+        if with_real_configmaa: 
+            print("Chargement de la config MAA par fichier...")
+            self.create_configsmaa()
+        else:
+            print(("Chargement de la config MAA par défaut..."))
+            self.create_full_configmaa()
 
     def create_region(self, fichier="liste_regions.csv"):
         """ Crée les objets Region """
@@ -869,17 +667,20 @@ class Initiate(object):
                 profondeur = int(infos[6])
 
                 # Récupère l'instance de station correspondance
-                station = Station.objects.get(oaci = infos[0])
-                configmaa = ConfigMAA.objects.create(
-                    station = station,
-                    type_maa = type_maa,
-                    seuil = seuil,
-                    auto = auto,
-                    pause = pause, 
-                    scan = scan, 
-                    profondeur = profondeur
-                )
-                configmaa.save()
+                try:
+                    station = Station.objects.get(oaci = infos[0])
+                    configmaa = ConfigMAA.objects.create(
+                        station = station,
+                        type_maa = type_maa,
+                        seuil = seuil,
+                        auto = auto,
+                        pause = pause, 
+                        scan = scan, 
+                        profondeur = profondeur
+                    )
+                    configmaa.save()
+                except:
+                    pass
 
     def create_full_configmaa(self):
         """ Crée l'ensemble des MAA possibles pour l'ensemble des stations exitantes """

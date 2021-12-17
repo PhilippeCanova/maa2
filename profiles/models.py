@@ -4,7 +4,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.conf import settings
 
-from maa_django.models.mes_mixins import Activable
+from maa_django.mes_mixins import Activable
 from configurateur.models import Region
 
 
