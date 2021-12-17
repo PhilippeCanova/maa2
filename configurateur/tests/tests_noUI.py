@@ -189,7 +189,6 @@ class RejeuSituation_TestCase(StaticLiveServerTestCase, TestCase ):
         # (car déjà terminé à l'heure de l'analyse)
         self.assertEqual(len(EnvoiMAA.objects.filter(configmaa__station__oaci = 'FMCZ')), 0)
         
-
     @patch("donneur.commons.request_data_cdp")
     def test_TC1_LFRH(self, mock_request_data_cdp):
         """
@@ -237,7 +236,6 @@ class RejeuSituation_TestCase(StaticLiveServerTestCase, TestCase ):
         print(envois)
         self.assertEqual(len(envois), 1)
 
-
     @patch("donneur.commons.request_data_cdp")
     def test_TC1_LFRB(self, mock_request_data_cdp):
         """
@@ -271,8 +269,45 @@ class RejeuSituation_TestCase(StaticLiveServerTestCase, TestCase ):
         envois = EnvoiMAA.objects.filter(configmaa__station__oaci = 'LFRB', configmaa__type_maa = 'TMIN', configmaa__seuil = 5.0)
         self.assertEqual(len(envois), 1)
 
+    @patch("donneur.commons.request_data_cdp")
+    def test_TC1_LFQQ(self, mock_request_data_cdp):
+        """
+            Le 17/12, vers 10h36, production en oper v1 d'un MAA FG de 10:36 à 22TU pour LFQQ. 
+            En test, MAA de 10TU à 21TU => pourquoi 10TU ? pourquoi 21TU
+            Correction faite pour prendre comme date de début le max de heure_analyse - heure début
+            Correction faite pour faire la recherche de la fin jusqu'à l'heure reseau_analyse + profondeur incluse 
+        """
+        num_TC = '1'
+        mock_request_data_cdp.side_effect=[
+            self.get_data_tc(num_TC,'cdpaero'),
+            self.get_data_tc(num_TC,'cdph'), 
+            self.get_data_tc(num_TC,'cdpq'), 
+            self.get_data_tc(num_TC,'cdphom'), 
+            self.get_data_tc(num_TC,'cdpqom'),  
+        ]
+        
+        #TODO: vérifier la bonne interogation des données Q en oper
 
+        heure_analyse= datetime.datetime(2021,12,17,10,36)
 
+        # S'assure qu'il n'y a pas déjà un MAA LFQQ de FG déjà en cours
+        self.assertEqual(len(EnvoiMAA.objects.filter(configmaa__station__oaci = 'LFQQ', configmaa__type_maa = 'FG')), 0)
+
+        # S'assure qu'il y a bien une config FG pour LFQQ
+        config = ConfigMAA.objects.get(station__oaci = 'LFQQ', type_maa = 'FG')
+        
+        analyse_15mn(heure_analyse)
+        
+        # S'assure que le MAA FG a bien été trouvé durant l'analyse
+        envois = EnvoiMAA.objects.filter(configmaa__station__oaci = 'LFQQ', configmaa__type_maa = 'FG')
+        self.assertEqual(len(envois), 1)
+
+        #Vérifier les heures de début et de fin
+        envoi = envois[0]
+        self.assertEqual(envoi.date_debut, datetime.datetime(2021,12,17,10,36,0))
+        self.assertEqual(envoi.date_fin, datetime.datetime(2021,12,17,22,0,0))
+        
+        
 
         
 

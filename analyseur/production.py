@@ -296,6 +296,8 @@ def create_maa_auto(log, provider, configmaa, heure_production, date_debut, date
     data_vent = create_data_vent(provider, configmaa, heure_production)
     data_tempe = create_data_tempe(provider, configmaa, heure_production)
 
+    date_debut = max(date_debut, heure_production)
+    
     # Crée l'instance d'envoiMAA
     try:
         envoi = EnvoiMAA.objects.create(

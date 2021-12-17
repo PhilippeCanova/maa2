@@ -20,7 +20,10 @@
             <li><a href="{% url 'detail_station_oaci' oaci='LFPG' %}">Config d'une station par oaci</a></li>
             <li><a href="{% url 'liste_config_maa' %}">Liste des configs MAA</a></li>
         </ul>
-
     </li>
+    <li><a href="http://nihoa-v27b.meteo.fr/cdp1/aerop?dpivot=-3,48&format=csv&param=idoaci,id,typeprev,dvalid,DateEmissionTAF,visi,visiprob40,VisibiliteTempo,VisibiliteProb40Tempo,ddtaf,DDTAFTempo,DDTAFProb40,DDTAFProb40Tempo,FFTAF,FFTAFTempo,FFTAFProb40,FFTAFProb40Tempo,FXTAF,FXTAFTempo,FXTAFProb40,FXTAFProb40Tempo,wwTAF,wwTAFTempo,wwTAFProb40,wwTAFProb40Tempo&ordre=dvalid&cond=(typeprev=0)%20and%20(DateEmissionTAF!=%27%27)">Requête CDP Aéro</a></li>
+    <li><a href="http://nihoa-v27b.meteo.fr/cdp1/h_p?dpivot=-48,60&format=csv&param=t/10,ff*1.94384,fx*1.94384,w1,preciptotcumfutur(adddate(dvalid,INTERVAL%201%20HOUR),ID,0)/10,preciptotcumfutur(adddate(dvalid,INTERVAL%201%20HOUR),ID,2)/10,preciptotcumfutur(adddate(dvalid,INTERVAL%201%20HOUR),ID,5)/10,preciptotcumfutur(adddate(dvalid,INTERVAL%201%20HOUR),ID,11)/10,preciptotcumfutur(adddate(dvalid,INTERVAL%201%20HOUR),ID,23)/10,EtatSol,pneige/100,dd&ordre=dvalid&meta=id,dvalid,dinsert&id=5934361">Requête CDP H Méropole_</a></li>
+    <li><a href="">Requête CDP Q Méropole_</a></li>
+    
 </ul>
 

@@ -89,6 +89,9 @@ class EnvoiMAA(models.Model):
     data_vent = models.TextField(null=True, blank=True)
     data_tempe = models.TextField(null=True, blank=True)
     
+    class Meta:
+        verbose_name = "Envoi MAA"
+        verbose_name_plural = "Envois MAA"
 
     @staticmethod
     def current_maas_by_type(oaci, type_maa, heure= datetime.utcnow(), seuil=None):

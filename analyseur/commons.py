@@ -63,7 +63,7 @@ def recherche_debut_maa(assembleur, oaci, periode_debut, configmaa):
             print(assembleur.aero.stations['LFRN'].ordered_echeances[0], assembleur.aero.stations['LFRN'].ordered_echeances[-1])
             print()"""
 
-        """if oaci == 'LFRK' and configmaa.type_maa == 'TMIN':
+        """if oaci == 'LFRB' and configmaa.type_maa == 'TMIN':
             print(echeance, configmaa.seuil, oaci, assembleur.question_declenche(oaci, echeance, configmaa.type_maa, configmaa.seuil))
             print(assembleur.get_tempe(oaci, echeance))"""
 
@@ -90,10 +90,15 @@ def recherche_fin_maa(assembleur, oaci, heure_debut_declenche, configmaa):
         S'il y a une interruption de plus de {Pause} heures, on considère le MAA terminé
         Retourne cette heure, ou à défaut au moins l'heure de début 
     """
-    heure_fin_max = heure_debut_declenche + timedelta(hours=configmaa.profondeur)
-    echeances = [ heure_debut_declenche + timedelta(hours=i) for i in range(0, configmaa.profondeur)]
+    echeances = [ heure_debut_declenche + timedelta(hours=i) for i in range(0, configmaa.profondeur+1)]
     pause = 0
     for echeance in echeances:
+        """Pour débug : if oaci == 'LFQQ' and configmaa.type_maa == 'FG':
+            print(echeance, configmaa.seuil, oaci, assembleur.question_declenche(oaci, echeance, configmaa.type_maa, configmaa.seuil))
+            try:
+                print(assembleur.aero.get(oaci).get_echeance(echeance).get_WW())
+            except:
+                pass"""
         if assembleur.question_declenche(oaci, echeance, configmaa.type_maa, configmaa.seuil):
             pause = 0
         else:
@@ -136,6 +141,8 @@ def analyse_15mn(heure_analyse=datetime.utcnow()):
             periode_debut = define_start_laptime(heure_analyse, configmaa)
 
             heure_debut_declenche = recherche_debut_maa(manager_cdp, station.oaci, periode_debut, configmaa)
+            """if station.oaci == 'LFRB' and configmaa.type_maa == 'TMIN':
+                print(periode_debut)"""
 
             if heure_debut_declenche is None:
                 # Pas de MAA en vue
@@ -242,7 +249,8 @@ def analyse_15mn(heure_analyse=datetime.utcnow()):
             if not envoi['creation']:
                 create_cnl_maa_auto(envoi['log'], manager_cdp, envoi['configmaa'], heure_analyse, ind+1, total, envoi['maa_annule'])
             else:
-                create_maa_auto(envoi['log'], manager_cdp, envoi['configmaa'], heure_analyse, envoi['debut'], envoi['fin'], ind+1, total)
+                date_debut = max(envoi['debut'], heure_analyse)
+                create_maa_auto(envoi['log'], manager_cdp, envoi['configmaa'], heure_analyse, date_debut, envoi['fin'], ind+1, total)
             
             
 

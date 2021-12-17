@@ -246,6 +246,9 @@ class Station(Activable):
     fuseau = models.CharField(max_length=124, null=False)
     wind_unit = models.CharField(max_length=3, null=False, choices=[('kt','kt'), ('kmh','km/h')], verbose_name="Unité de vitesse")
     
+    class Meta:
+        verbose_name = "Aéroport"
+
     def __str__(self):
         return "{}- {} ({})".format(self.oaci, self.nom, self.region)
 
@@ -265,7 +268,7 @@ class Station(Activable):
 class ConfigMAA(Activable):
     """ Liste les MAA autorisés pour une station"""
     station = models.ForeignKey(Station, related_name='configmaa', on_delete=models.CASCADE, null=False)
-    type_maa = models.CharField(max_length=20, null=False, choices= AutorisedMAAs.get_choices())
+    type_maa = models.CharField(max_length=20, null=False, choices= AutorisedMAAs.get_choices(), verbose_name="Type MAA")
     seuil = models.FloatField(null=True, blank=True)
     auto = models.BooleanField(null=False, default= False)
     pause = models.IntegerField(null=False, default=2)
@@ -294,7 +297,9 @@ class ConfigMAA(Activable):
         return None, None
     class Meta:
         ordering = ["station", "type_maa", "seuil"]
-
+        verbose_name = "Configuration MAA"
+        verbose_name_plural = "Configurations MAA"
+        
         # Permet d'éviter un enregistrement de plusieurs MAA avec le même combo station/Type/seuil
         constraints = [
             models.UniqueConstraint(fields=['station', 'type_maa', 'seuil'], name='unique combo MAA par station')
